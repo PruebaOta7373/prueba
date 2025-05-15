@@ -55,8 +55,13 @@ app.get('/:name/update', (req, res) => {
   }
 
   const firmwarePath = path.join(firmwareDir, files[0]);
+  const stat = fs.statSync(firmwarePath);
+  //res.download(firmwarePath, files[0]);
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Length', stat.size);
 
-  res.download(firmwarePath, files[0]);
+  // ✅ Send the file without content-disposition (to avoid download headers)
+  res.sendFile(firmwarePath);
 });
 
 const multer = require('multer')
