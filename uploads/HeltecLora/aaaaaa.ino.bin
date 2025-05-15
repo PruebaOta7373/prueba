@@ -1,0 +1,40 @@
+const express = require('express');
+const app = express();
+const path = require('path');
+const fs = require('fs');
+
+const versionFilePath = path.join(__dirname, 'version.txt');
+
+function getVersion() {
+  try {
+    const version = fs.readFileSync(versionFilePath, 'utf8').trim();
+    return version;
+  } catch (err) {
+    console.error('Error reading version file:', err);
+    return "0.0"; // Default version if file reading fails
+  }
+}
+
+app.get('/', (req, res) => {
+  res.send('<p>hello from express</p>');
+});
+
+app.get('/update', (req, res) => {
+  const firmware = path.join(__dirname, 'firmware', 'otatestingV2.ino.bin');
+  res.download(firmware);
+});
+
+app.get('/version', (req, res) => {
+  const currentVersion = getVersion();
+  res.json({ version: currentVersion });
+});
+
+app.listen(5000, () => {
+  console.log('Server is running on port 5000');
+  //Ensure the version file exists.
+  if(!fs.existsSync(versionFilePath)){
+    fs.writeFileSync(versionFilePath, "0.0");
+    console.log("Version file created");
+  }
+
+});

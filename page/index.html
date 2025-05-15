@@ -1,0 +1,178 @@
+<html>
+<head>
+    <title>Example</title>
+</head>
+<body>
+    <style>
+        #inPageConsole {
+          background-color: #000;
+          color: #0f0;
+          padding: 10px;
+          height: 20%;
+          font-family: monospace;
+          white-space: pre-wrap;
+          border: 1px solid #0f0;
+          margin-top: 0;
+          border-radius: 25px;
+          overflow-y: auto;
+        }
+    </style>
+    <script >
+        var fd = new FormData();
+        var num = 0;
+        function dragOverHandler(ev) {
+          //  console.log("File(s) in drop zone");
+            ev.preventDefault(); // Prevent default behavior (Prevent file from being opened)
+        }
+
+        function dropHandler(ev) {
+            console.log("File dropped");
+            // Prevent default behavior (Prevent file from being opened)
+            ev.preventDefault();
+            if (ev.dataTransfer.items) {
+                // Use DataTransferItemList interface to access the file(s)
+                [...ev.dataTransfer.items].forEach((item, i) => {
+                // If dropped items aren't files, reject them
+                if (item.kind === "file") {
+                    const file = item.getAsFile();
+                    console.log(`file[${i}] name = ${file.name}`);
+                    var name = document.getElementById("name").value+".ino.bin";
+                    fd.append('version', document.getElementById("num").value+"");
+                    fd.append('file', file, name);
+                    uploadFile();
+                }
+                });
+            } else {
+                // Use DataTransfer interface to access the file(s)
+                [...ev.dataTransfer.files].forEach((file, i) => {
+                console.log(`… file[${i}].name = ${file.name}`);
+                });
+            }
+        }
+    
+        function uploadFile(){
+            var req = fetch('/'+document.getElementById("placa").value+'/new', {
+                method: 'post',
+                body: fd /* or aFile[0]*/
+            }); // returns a promise
+                fd = new FormData();   
+            req.then(function(res) {
+                if (res.ok) {
+                    console.log("Succesfull");    
+                } else {
+                    console.log("Failure")
+                }
+            }, function(error) {
+            console.error('failed due to network error or cross domain')
+            })
+
+        }
+    
+        async function getData() {
+            var placa = document.getElementById("placa").value+"";
+            const url = "/"+placa+"/version";
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+                }
+
+                const json = await response.json();
+                document.getElementById("ver").innerHTML = json.version;
+                console.log(json);
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+    </script>   
+    
+    <p style="font-size: 350%; margin-bottom: 0; display: inline;">Lastest Version:</p><p id="ver" style="font-size: 350%; margin-bottom: 0; display: inline;"> </p>
+
+    <p for="placa" style="font-size: 150%; margin-bottom: 0;margin-top: 10px;">Placa:</p>
+    <select  onchange="getData()" name="placa" id="placa" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
+        <option value="" disabled selected hidden>-</option>
+        <option style="font-size: 100%;" value="LilygoA7670g">Lilygo A7670G</option>
+        <option style="font-size: 100%;" value="Arduino">Arduino</option>
+        <option style="font-size: 100%;" value="HeltecLora">Heltec LoRa</option>
+    </select>
+
+    <p style="font-size: 150%; margin-bottom: 0; margin-top: 10px;">Nombre de la actualizacion</p>
+    <input id="name" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
+
+
+
+
+    <p style="font-size: 150%;margin-bottom: 0;margin-top: 10px;">Numero de version</p>
+    <input id="num" type="number" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
+    
+
+ 
+    <div 
+     
+        style="border: 4px dashed #0087F7; width: 45%; height: 33%; text-align: center; margin: auto; position: relative; top: 2%; bottom: 0; left: 0; right: 0; border-radius: 50px;"
+        id="drop_zone"
+        ondrop="dropHandler(event);"
+        ondragover="dragOverHandler(event);">
+        <p
+        style="font-size: 150%;">
+        Drag one file to this <i>drop zone</i> to upload.</p>
+    </div>
+
+
+      <br>
+    <h2 style="margin-top: 0;">In-Page Console</h2>
+    <div id="inPageConsole"></div>
+
+    <script>
+    (  function () {
+    const consoleDiv = document.getElementById('inPageConsole');
+    const maxConsoleItems = 25; // Maximum number of items in the console
+
+    function logToPage(type, args) {
+      const msg = Array.from(args).map(arg => {
+        try {
+          return typeof arg === 'object' ? JSON.stringify(arg) : String(arg);
+        } catch {
+          return String(arg);
+        }
+      }).join(' ');
+
+      const line = document.createElement('div');
+      line.textContent = `[${type}] ${msg}`;
+      line.style.fontSize = '150%'; 
+      consoleDiv.appendChild(line);
+
+      // Remove oldest items if the limit is exceeded
+      while (consoleDiv.childNodes.length > maxConsoleItems) {
+        consoleDiv.removeChild(consoleDiv.firstChild);
+      }
+
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    // Keep original console functions
+    const originalLog = console.log;
+    const originalError = console.error;
+    const originalWarn = console.warn;
+
+    // Override
+    console.log = function (...args) {
+      originalLog.apply(console, args);
+      logToPage('log', args);
+    };
+
+    console.error = function (...args) {
+      originalError.apply(console, args);
+      logToPage('error', args);
+    };
+
+    console.warn = function (...args) {
+      originalWarn.apply(console, args);
+      logToPage('warn', args);
+    };
+  })();
+    </script>
+
+</body>
+
+</html>
