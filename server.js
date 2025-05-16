@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const port = process.env.PORT || 5000; 
 const path = require('path');
 const fs = require('fs');
 app.use(express.json());
@@ -60,7 +61,6 @@ app.get('/:name/update', (req, res) => {
   res.setHeader('Content-Type', 'application/octet-stream');
   res.setHeader('Content-Length', stat.size);
 
-  // ✅ Send the file without content-disposition (to avoid download headers)
   res.sendFile(firmwarePath);
 });
 
@@ -121,7 +121,7 @@ app.get('/:name/version', (req, res) => {
   res.json({ version: n });
 });
 
-app.listen(5000, () => {
+app.listen(port, () => {
   console.log('Server is running on port 5000');
   //Ensure the version file exists.
   if(!fs.existsSync(versionFilePath)){
