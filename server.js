@@ -122,7 +122,7 @@ app.get('/:name/version', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log('Server is running on port 5000');
+  console.log('Server is running on port'+ port);
   //Ensure the version file exists.
   if(!fs.existsSync(versionFilePath)){
     fs.writeFileSync(versionFilePath, "0.0");
