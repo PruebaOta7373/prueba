@@ -13,7 +13,19 @@ function getVersion(name) {
     const data = fs.readFileSync(versionFilePath, 'utf8');
     const doc = JSON.parse(data);
     let version = doc[name];
-    return version;
+    var aux ="";
+    if(version != [] && version != "" & version != null){
+      version.forEach((element) => {
+        aux2 = element
+        aux2 = aux2.replace('_', '.');
+        aux2 = aux2.replace("V", "");        
+        aux+=aux2+", ";
+      })
+      aux = aux.slice(0, -2);
+    }else{
+      aux = "None";
+    }
+    return " " + aux;
   } catch (err) {
     console.error('Error reading version file:', err);
     return "0.0"; // Default version
@@ -23,7 +35,9 @@ function updateVersion(name, newVer) {
   try {
     const data = fs.readFileSync(versionFilePath, 'utf8');
     const doc = JSON.parse(data);
-    doc[name] = newVer;
+    var aux = "V"+newVer;
+    aux = aux.replace('.', '_');
+    doc[name].push(aux);
     fs.writeFileSync(versionFilePath, JSON.stringify(doc, 2));
     console.log('Version updated successfully');
   } catch (err) {
@@ -37,9 +51,11 @@ app.get('/', (req, res) => {
   //res.send('<p>hello from express</p>');
 });
 
-app.get('/:version/update', (req, res) => {
+app.get('/:name/:version/update', (req, res) => {
   const version = req.params.version;
-  const firmwareDir = path.join(__dirname,"uploads", version);
+  const name = req.params.name;
+  const firmwareDir = path.join(__dirname,"uploads", name, version);
+
   // Check if directory exists
   if (!fs.existsSync(firmwareDir)) {
     return res.status(404).send('Directory not found');
@@ -72,7 +88,7 @@ const storage = multer.diskStorage({
     if (req.body.version != ""){
 
       // Ensure the target folder exists
-      const targetFolder = path.join(__dirname, 'uploads', req.params.name);
+      const targetFolder = path.join(__dirname, 'uploads', req.params.name,req.params.version);
       fs.mkdirSync(targetFolder, { recursive: true });
 
       // Delete previous files in the folder
@@ -98,7 +114,7 @@ const storage = multer.diskStorage({
 
 
 const upload = multer({ storage: storage });
-app.post("/:name/new", upload.single('file'), async function (req, res, next) {
+app.post("/:name/:version/new", upload.single('file'), async function (req, res, next) {
   try {
       console.log("Uploaded file:", req.file.originalname); // file
       console.log("Version:", req.body.version);          
@@ -121,8 +137,39 @@ app.get('/:name/version', (req, res) => {
   res.json({ version: n });
 });
 
+
+  app.get('/:name/empty', (req, res) => {
+  try {
+    const name = req.params.name;
+    const uploadsDir = path.join(__dirname, 'uploads', name);
+    
+    // Check if directory exists
+    if (!fs.existsSync(uploadsDir)) {
+      return res.status(404).send('Directory not found');
+    }
+
+    // Remove all subdirectories and files
+    fs.readdirSync(uploadsDir).forEach((dir) => {
+      const dirPath = path.join(uploadsDir, dir);
+      fs.rmSync(dirPath, { recursive: true, force: true });
+    });
+
+    // Update version.json to empty array for this name
+    const data = fs.readFileSync(versionFilePath, 'utf8');
+    const doc = JSON.parse(data);
+    doc[name] = [];
+    fs.writeFileSync(versionFilePath, JSON.stringify(doc, null, 2));
+
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('Error emptying directory:', err);
+    res.status(500).send('Error emptying directory');
+  }
+});     
+
+
 app.listen(port, () => {
-  console.log('Server is running on port'+ port);
+  console.log('Server is running on port '+ port);
   //Ensure the version file exists.
   if(!fs.existsSync(versionFilePath)){
     fs.writeFileSync(versionFilePath, "0.0");

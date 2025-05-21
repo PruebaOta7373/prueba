@@ -51,7 +51,12 @@
         }
     
         function uploadFile(){
-            var req = fetch('/'+document.getElementById("placa").value+'/new', {
+            var aux = document.getElementById("placa").value;
+            aux +="/V";
+            aux += document.getElementById("num").value.replace('.', '_');
+            console.log(aux+"/new");
+            console.log(fd);
+            var req = fetch('/'+aux+'/new', {
                 method: 'post',
                 body: fd /* or aFile[0]*/
             }); // returns a promise
@@ -70,6 +75,8 @@
     
         async function getData() {
             var placa = document.getElementById("placa").value+"";
+            document.getElementById("placaButton").innerHTML = placa;
+          
             const url = "/"+placa+"/version";
             try {
                 const response = await fetch(url);
@@ -84,9 +91,27 @@
                 console.error(error.message);
             }
         }
+        async function empty(){
+           var placa = document.getElementById("placa").value+"";
+            const url = "/"+placa+"/empty";
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+                }else{
+                  console.log(placa+": content delete succesfull");
+                }
+                
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
     </script>   
     
-    <p style="font-size: 350%; margin-bottom: 0; display: inline;">Lastest Version:</p><p id="ver" style="font-size: 350%; margin-bottom: 0; display: inline;"> </p>
+    <p style="font-size: 350%; margin-bottom: 0; display: inline;">Available Versions:</p><p id="ver" style="font-size: 350%; margin-bottom: 0; display: inline;"> </p>
+
+    <br>
+    <button onclick="empty()" style="background-color: #ff0000; color: white; padding: 8px 16px; border: none; border-radius: 4px;">Vaciar <a id="placaButton"></a></button>
 
     <p for="placa" style="font-size: 150%; margin-bottom: 0;margin-top: 10px;">Placa:</p>
     <select  onchange="getData()" name="placa" id="placa" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
@@ -96,14 +121,16 @@
         <option style="font-size: 100%;" value="HeltecLora">Heltec LoRa</option>
     </select>
 
+    
+    <p style="font-size: 150%;margin-bottom: 0;margin-top: 10px;">Numero de version</p>
+    <input id="num" type="number" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
+    
     <p style="font-size: 150%; margin-bottom: 0; margin-top: 10px;">Nombre de la actualizacion</p>
     <input id="name" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
 
 
 
 
-    <p style="font-size: 150%;margin-bottom: 0;margin-top: 10px;">Numero de version</p>
-    <input id="num" type="number" style="width: 20%; padding: 3px; font-size: large; border: 1px solid #000000; border-radius: 5px; margin-top: 5px;">
     
 
  
