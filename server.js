@@ -37,9 +37,9 @@ app.get('/', (req, res) => {
   //res.send('<p>hello from express</p>');
 });
 
-app.get('/:name/update', (req, res) => {
-  const name = req.params.name;
-  const firmwareDir = path.join(__dirname,"uploads", name);
+app.get('/:version/update', (req, res) => {
+  const version = req.params.version;
+  const firmwareDir = path.join(__dirname,"uploads", version);
   // Check if directory exists
   if (!fs.existsSync(firmwareDir)) {
     return res.status(404).send('Directory not found');
