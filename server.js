@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 app.use(express.json());
 
-
 const versionFilePath = path.join(__dirname, 'version.json');
 
 function getVersion(name) {
@@ -16,16 +15,31 @@ function getVersion(name) {
     var aux ="";
     if(version != [] && version != "" & version != null){
       version.forEach((element) => {
-        aux2 = element
-        aux2 = aux2.replace('_', '.');
-        aux2 = aux2.replace("V", "");        
-        aux+=aux2+", ";
+        aux += element.replace('_', '.').replace("V", "")+", ";
       })
       aux = aux.slice(0, -2);
     }else{
       aux = "None";
     }
     return " " + aux;
+  } catch (err) {
+    console.error('Error reading version file:', err);
+    return "0.0"; // Default version
+  }
+}
+function getNames() {
+  try {
+    const data = fs.readFileSync(versionFilePath, 'utf8');
+    const doc = JSON.parse(data);
+    const json = {}; // Initialize json as an object
+    let cont = 1;     // Use 'let', not 'cont' which was a typo
+
+    for (const key in doc) {
+      json[cont] = key;
+      cont++;
+    }
+
+    return json;
   } catch (err) {
     console.error('Error reading version file:', err);
     return "0.0"; // Default version
@@ -50,7 +64,7 @@ app.get('/', (req, res) => {
 
   //res.send('<p>hello from express</p>');
 });
-
+//get the update file for a specific board and version
 app.get('/:name/:version/update', (req, res) => {
   const version = req.params.version;
   const name = req.params.name;
@@ -112,7 +126,7 @@ const storage = multer.diskStorage({
 });
 
 
-
+// Upload a new firmware file version for a specific board
 const upload = multer({ storage: storage });
 app.post("/:name/:version/new", upload.single('file'), async function (req, res, next) {
   try {
@@ -127,7 +141,7 @@ app.post("/:name/:version/new", upload.single('file'), async function (req, res,
   }
 });
 
-
+// Get the list of all versions for a specific board
 app.get('/:name/version', (req, res) => {
   let n = getVersion(req.params.name);
   n = Number.isInteger(n) ? `${n}.0` : `${n}`;
@@ -165,6 +179,13 @@ app.get('/:name/version', (req, res) => {
     console.error('Error emptying directory:', err);
     res.status(500).send('Error emptying directory');
   }
+});
+app.get('/placas', (req, res) => {
+  let n = getNames();
+  if (!n) {
+    return res.status(404).send('Version not found');
+  }
+  res.json( n );
 });     
 
 
